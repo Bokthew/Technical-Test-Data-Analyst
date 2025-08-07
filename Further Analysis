@@ -1,1 +1,151 @@
+-- 1. BASIC DATA EXPLORATION QUERIES
+-- ====================================
+
+-- Check total records in each table
+SELECT 'cards_data' as table_name, COUNT(*) as record_count FROM testda.cards_data
+UNION ALL
+SELECT 'transactions_data' as table_name, COUNT(*) as record_count FROM testda.transactions_data  
+UNION ALL
+SELECT 'users_data' as table_name, COUNT(*) as record_count FROM testda.users_data;
+
+-- 2. USER DEMOGRAPHICS ANALYSIS
+-- ====================================
+
+-- Age distribution of users
+SELECT 
+    CASE 
+        WHEN current_age < 30 THEN '18-29'
+        WHEN current_age < 40 THEN '30-39'
+        WHEN current_age < 50 THEN '40-49'
+        WHEN current_age < 60 THEN '50-59'
+        ELSE '60+'
+    END as age_group,
+    COUNT(*) as user_count,
+    ROUND(AVG(CAST(REPLACE(REPLACE(yearly_income, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as avg_income,
+    ROUND(AVG(credit_score), 0) as avg_credit_score
+FROM testda.users_data
+GROUP BY age_group
+ORDER BY age_group;
+
+-- Gender distribution and financial metrics
+SELECT 
+    gender,
+    COUNT(*) as user_count,
+    ROUND(AVG(CAST(REPLACE(REPLACE(yearly_income, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as avg_yearly_income,
+    ROUND(AVG(CAST(REPLACE(REPLACE(total_debt, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as avg_total_debt,
+    ROUND(AVG(credit_score), 0) as avg_credit_score,
+    ROUND(AVG(num_credit_cards), 1) as avg_num_cards
+FROM testda.users_data
+GROUP BY gender;
+
+-- 3. CARD ANALYSIS
+-- ====================================
+
+-- Card brand distribution
+SELECT 
+    card_brand,
+    COUNT(*) as card_count,
+    ROUND(AVG(CAST(REPLACE(REPLACE(credit_limit, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as avg_credit_limit
+FROM testda.cards_data
+GROUP BY card_brand
+ORDER BY card_count DESC;
+
+-- Cards compromised on dark web analysis
+SELECT 
+    card_on_dark_web,
+    COUNT(*) as card_count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM testda.cards_data), 2) as percentage
+FROM testda.cards_data
+GROUP BY card_on_dark_web;
+
+-- Credit limit analysis by card type
+SELECT 
+    card_type,
+    COUNT(*) as card_count,
+	ROUND(AVG(CAST(REPLACE(REPLACE(credit_limit, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as avg_credit_limit,	
+    ROUND(MIN(CAST(REPLACE(REPLACE(credit_limit, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as min_credit_limit,	
+    ROUND(MAX(CAST(REPLACE(REPLACE(credit_limit, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as max_credit_limit	
+FROM testda.cards_data
+GROUP BY card_type
+ORDER BY avg_credit_limit DESC;
+
+-- 4. TRANSACTION ANALYSIS
+-- ====================================
+
+-- Transaction volume by date
+SELECT 
+    DATE(date) as transaction_date,
+    COUNT(*) as transaction_count,
+    ROUND(SUM(CAST(REPLACE(REPLACE(amount, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as total_amount,
+    ROUND(AVG(CAST(REPLACE(REPLACE(amount, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as avg_amount
+FROM testda.transactions_data
+GROUP BY DATE(date)
+ORDER BY transaction_date;
+
+-- Chip vs non-chip transaction analysis
+SELECT 
+    use_chip,
+    COUNT(*) as transaction_count,
+    ROUND(SUM(CAST(REPLACE(REPLACE(amount, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as total_amount,
+    ROUND(AVG(CAST(REPLACE(REPLACE(amount, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as avg_amount,
+    COUNT(CASE WHEN errors = 1 THEN 1 END) as error_count,
+    ROUND(COUNT(CASE WHEN errors = 1 THEN 1 END) * 100.0 / COUNT(*), 2) as error_rate_percent
+FROM testda.transactions_data
+GROUP BY use_chip;
+
+-- Top merchant cities by transaction volume
+SELECT 
+    merchant_city,
+    merchant_state,
+    COUNT(*) as transaction_count,
+    ROUND(SUM(CAST(REPLACE(REPLACE(amount, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as total_amount,
+    ROUND(AVG(CAST(REPLACE(REPLACE(amount, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as avg_amount
+FROM testda.transactions_data
+GROUP BY merchant_city, merchant_state
+ORDER BY total_amount DESC
+LIMIT 10;
+
+-- 5. JOINED ANALYSIS QUERIES
+-- ====================================
+
+-- User spending patterns by demographics
+SELECT 
+    u.gender,
+    CASE 
+        WHEN u.current_age < 30 THEN '18-29'
+        WHEN u.current_age < 40 THEN '30-39'
+        WHEN u.current_age < 50 THEN '40-49'
+        WHEN u.current_age < 60 THEN '50-59'
+        ELSE '60+'
+    END as age_group,
+    COUNT(t.id) as transaction_count,
+    ROUND(SUM(CAST(REPLACE(REPLACE(t.amount, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as total_spending,
+    ROUND(AVG(CAST(REPLACE(REPLACE(t.amount, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as avg_transaction_amount,
+    ROUND(AVG(CAST(REPLACE(REPLACE(u.yearly_income, '$', ''), ',', '') AS DECIMAL(12,2))), 0) as avg_income
+FROM testda.users_data u
+JOIN testda.cards_data c ON u.id = c.client_id
+JOIN testda.transactions_data t ON c.id = t.card_id
+GROUP BY u.gender, age_group
+ORDER BY total_spending DESC;
+
+
+-- 6. FRAUD AND SECURITY ANALYSIS
+-- ====================================
+
+-- High-risk transaction patterns
+SELECT 
+    t.client_id,
+    u.credit_score,
+    c.card_on_dark_web,
+    COUNT(t.id) as transaction_count,
+    ROUND(SUM(t.amount), 2) as total_amount,
+    ROUND(AVG(t.amount), 2) as avg_amount,
+    COUNT(CASE WHEN t.errors = 1 THEN 1 END) as error_count
+FROM testda.transactions_data t
+JOIN testda.users_data u ON t.client_id = u.id
+JOIN testda.cards_data c ON t.card_id = c.id
+GROUP BY t.client_id, u.credit_score, c.card_on_dark_web
+HAVING error_count > 5 OR avg_amount > 1000
+ORDER BY error_count DESC, avg_amount DESC;
+
 
