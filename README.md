@@ -15,7 +15,6 @@ Three tables in **testda schema:**
 **1. Data Exploration**
 
 - Record counts across tables
-- Data quality checks
 
 **2. User Demographics**
 
