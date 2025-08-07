@@ -45,7 +45,5 @@ Three tables in **testda schema:**
 ## 📈 **Key Insights**
 
 - User spending patterns by age/gender
-- Transaction security analysis
 - Fraud detection indicators
 - Geographic transaction trends
-- Credit card performance metrics
