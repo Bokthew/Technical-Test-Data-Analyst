@@ -4,7 +4,7 @@
 
 📊 **Dataset**
 
-Three tables in testda schema:
+Three tables in **testda schema:**
 
 - **cards_data** - Credit card details, brands, security status
 - **transactions_data** - Transaction history, amounts, locations
