@@ -6,9 +6,10 @@
 
 Three tables in testda schema:
 
-- **users_data** - Customer demographics, income, credit scores
 - **cards_data** - Credit card details, brands, security status
 - **transactions_data** - Transaction history, amounts, locations
+- **users_data** - Customer demographics, income, credit scores
+
 
 ## 🔍 **Analysis Categories**
 **1. Data Exploration**
@@ -20,7 +21,6 @@ Data quality checks
 
 Age group analysis with financial metrics
 Gender-based spending patterns
-Credit score distributions
 
 **3. Card Analysis**
 
@@ -32,19 +32,15 @@ Card type comparisons
 
 Daily transaction volumes
 Chip vs non-chip usage
-Geographic transaction hotspots
-Error rate analysis
+Geographic transaction
 
 **5. Cross-Dataset Insights**
 
 Spending by demographics
-Income vs transaction correlations
 
 **6. Fraud & Security**
 
 High-risk transaction detection
-Error pattern analysis
-Security breach impact
 
 
 ## 📈 **Key Insights**
