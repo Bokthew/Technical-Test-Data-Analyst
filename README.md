@@ -49,8 +49,8 @@ Security breach impact
 
 ## 📈 **Key Insights**
 
-User spending patterns by age/gender
-Transaction security analysis
-Fraud detection indicators
-Geographic transaction trends
-Credit card performance metrics
+- User spending patterns by age/gender
+- Transaction security analysis
+- Fraud detection indicators
+- Geographic transaction trends
+- Credit card performance metrics
